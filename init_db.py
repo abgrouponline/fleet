@@ -1,4 +1,3 @@
-from app import create_app
 from models import db, User, Workshop
 from datetime import datetime
 import os
@@ -18,6 +17,7 @@ def init_database(force=False):
     """
     # Use production config for hosted environments
     env = os.getenv('FLASK_ENV', 'production')
+    from app import create_app  # Local import to avoid circular dependency
     app = create_app(env)
     
     with app.app_context():
