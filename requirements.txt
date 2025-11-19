@@ -1,0 +1,12 @@
+Flask
+Flask-SQLAlchemy
+Flask-JWT-Extended
+Flask-CORS
+Flask-Migrate
+psycopg2-binary
+python-dotenv
+Werkzeug
+email-validator
+python-dateutil
+gunicorn
+
