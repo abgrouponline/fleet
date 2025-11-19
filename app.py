@@ -4,6 +4,7 @@ from flask_jwt_extended import JWTManager
 from config import config
 from models import db
 import os
+from init_db import ensure_database_initialized
 
 def create_app(config_name='development'):
     app = Flask(__name__)
@@ -51,6 +52,12 @@ def create_app(config_name='development'):
         print("=" * 80, flush=True)
         return jsonify({'error': 'Token is not fresh'}), 401
     
+    # Ensure database is initialized before handling requests
+    @app.before_request
+    def ensure_db_ready():
+        if not ensure_database_initialized(silent=True):
+            return jsonify({'error': 'Service is initializing, please retry in a few seconds.'}), 503
+
     # Register blueprints
     from routes.auth import auth_bp
     from routes.assets import assets_bp

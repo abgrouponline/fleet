@@ -3,6 +3,10 @@ from models import db, User, Workshop
 from datetime import datetime
 import os
 import time
+from threading import Lock
+
+_db_initialized = False
+_db_init_lock = Lock()
 
 def init_database(force=False):
     """
@@ -162,6 +166,8 @@ def init_database(force=False):
         
         print("="*50 + "\n")
         
+        global _db_initialized
+        _db_initialized = True
         return True
 
 def auto_init_on_startup():
@@ -205,7 +211,7 @@ def auto_init_on_startup():
             
             # If connection works, proceed with initialization
             # We're already in an app context, so call the initialization logic directly
-            _init_database_in_context(force=False)
+            ensure_database_initialized(force=False, silent=False)
             print("✅ Auto-initialization completed successfully")
             return True
             
@@ -233,7 +239,31 @@ def auto_init_on_startup():
     
     return False
 
-def _init_database_in_context(force=False):
+def ensure_database_initialized(force=False, silent=False):
+    """
+    Ensure the database is initialized. Safe to call multiple times.
+    Returns True if initialized successfully, False otherwise.
+    """
+    global _db_initialized
+    if _db_initialized and not force:
+        return True
+    
+    with _db_init_lock:
+        if _db_initialized and not force:
+            return True
+        try:
+            _init_database_in_context(force=force, silent=silent)
+            _db_initialized = True
+            return True
+        except Exception as e:
+            if not silent:
+                import traceback
+                print(f"❌ Database initialization error: {e}")
+                print(traceback.format_exc())
+            return False
+
+
+def _init_database_in_context(force=False, silent=False):
     """
     Internal function to initialize database within an existing app context.
     This is called by auto_init_on_startup() which is already in an app context.
